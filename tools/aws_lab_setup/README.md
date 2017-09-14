@@ -12,7 +12,7 @@ This is an automated lab setup for Ansible training. It creates five nodes per u
 
 ### AWS Setup ###
 
-The `provision_lab.yml` playbook creates instances, configures them for password authentication, creates an inventory file for each user with their IPs and credentials, and emails every user their respective inventory file. An instructor inventory file is also created in the current directory which will let the instructor access the nodes of any student by simply targeting the the username as a host group. The lab is created in `us-east-1` by default.
+The `provision_lab.yml` playbook creates instances, configures them for password authentication, creates an inventory file for each user with their IPs and credentials, and emails every user their respective inventory file. An instructor inventory file is also created in the current directory which will let the instructor access the nodes of any student by simply targeting the the username as a host group. The lab is created in `us-east-1` by default.  Currently only works with `us-east-1` and `us-west-1`.
 
 **Note:** Emails are sent _every_ time the playbook is run. To prevent emails from being sent on subsequent runs of the playbook, add `email: no` to `extra_vars.yml`.
 
@@ -20,19 +20,21 @@ To set up the lab for Ansible training, follow these steps.
 
 1. Create an Amazon AWS account.
 
-2. Create an ssh key pair called 'ansible' (Network & Security->Key Pairs->Create Key Pair). Download the private key to your `.ssh` directory, e.g. to `.ssh/ansible.pem`. Alternatively, you can upload your own public key into AWS.
+2. Create an ssh key pair called 'ansible' (My Security Credentials->Network & Security->Key Pairs->Create Key Pair). Download the private key to your `.ssh` directory, e.g. to `.ssh/ansible.pem`. Alternatively, you can upload your own public key into AWS.
 
       If using an AWS generated key add it to the ssh-agent:
 
         ssh-add ~/.ssh/ansible.pem
 
-3. Create an [Access Key ID and Secret Access Key](http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html).
+3. Create an [Access Key ID and Secret Access Key](http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html).  Save the ID and key for later. 
 
-4. Install `boto`.
+4. Create Amazon VPC.   Use the wizard and just accept the defaults.   It should create a VPC and a subnet. Save this info for later.
+
+5. Install `boto`.
 
         pip install boto
 
-5. Create a `boto` configuration file containing your AWS access key ID and secret access key.
+6. Create a `boto` configuration file containing your AWS access key ID and secret access key.
 
     ```bash
     mkdir ~/.aws
@@ -45,24 +47,24 @@ To set up the lab for Ansible training, follow these steps.
     aws_secret_access_key = [secret key]
     ```
 
-6. Create a free [Sendgrid](http://sendgrid.com) account if you don't have one. Optionally, create an API key to use with this the playbook.
+7. Create a free [Sendgrid](http://sendgrid.com) account if you don't have one. Optionally, create an API key to use with this the playbook.
 
-7. Install the `sendgrid` python library:
+8. Install the `sendgrid` python library:
 
     **Note:** The `sendgrid` module does not work with `sendgrid >= 3`. Please install the latest `2.x` version.
 
         pip install sendgrid==2.2.1
         
-8. Install the `passlib` library
+9. Install the `passlib` library
 
         pip install passlib
 
-9. Clone the lightbulb repo:
+10. Clone the lightbulb repo:
 
         git clone https://github.com/ansible/lightbulb.git
         cd lightbulb/tools/aws_lab_setup
 
-10. Define the following variables, either in a file passed in using `-e @extra_vars.yml` or directly in a `vars` section in `aws_lab_setup\infra-aws.yml`:
+11. Define the following variables, either in a file passed in using `-e @extra_vars.yml` or directly in a `vars` section in `aws_lab_setup\infra-aws.yml`:
 
       ```yaml
       ec2_key_name: username                # SSH key in AWS to put in all the instances
@@ -77,7 +79,7 @@ To set up the lab for Ansible training, follow these steps.
       admin_password: changeme123           # Set this to something better if you'd like. Defaults to 'LearnAnsible[two digit month][two digit year]', e.g., LearnAnsible0416
       ```
 
-11. Create a `users.yml` by copying `sample-users.yml` and adding all your students:
+12. Create a `users.yml` by copying `sample-users.yml` and adding all your students:
 
      ```yaml
      users:
@@ -90,11 +92,11 @@ To set up the lab for Ansible training, follow these steps.
           email: jsmith@acme.com
      ```
 
-12. Run the playbook:
+13. Run the playbook:
 
         ansible-playbook provision_lab.yml -e @extra_vars.yml -e @users.yml
 
-13. Check on the EC2 console and you should see instances being created like:
+14. Check on the EC2 console and you should see instances being created like:
 
         TRAINING-LAB-<student_username>-node1|2|3|haproxy|tower|control
 
@@ -109,4 +111,4 @@ To destroy all the EC2 instaances after training is complete:
 
 1. Run the playbook:
 
-        ansible-playbook teardown_lab.yml -e @extra_vars.yml
+        ansible-playbook teardown_lab.yml -e @extra_vars.yml -e @users.yml
